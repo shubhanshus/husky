@@ -24,9 +24,11 @@ const (
 // TranslateTraceRequestFromReader translates an OTLP/HTTP request into Honeycomb-friendly structure
 // RequestInfo is the parsed information from the HTTP headers
 func TranslateTraceRequestFromReader(body io.ReadCloser, ri RequestInfo) (*TranslateOTLPRequestResult, error) {
-	if err := ri.ValidateTracesHeaders(); err != nil {
-		return nil, err
-	}
+
+	// Disable header validation
+	//if err := ri.ValidateTracesHeaders(); err != nil {
+	//	return nil, err
+	//}
 	request := &collectorTrace.ExportTraceServiceRequest{}
 	if err := parseOtlpRequestBody(body, ri.ContentType, ri.ContentEncoding, request); err != nil {
 		return nil, ErrFailedParseBody
@@ -37,9 +39,10 @@ func TranslateTraceRequestFromReader(body io.ReadCloser, ri RequestInfo) (*Trans
 // TranslateTraceRequest translates an OTLP/gRPC request into Honeycomb-friendly structure
 // RequestInfo is the parsed information from the gRPC metadata
 func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri RequestInfo) (*TranslateOTLPRequestResult, error) {
-	if err := ri.ValidateTracesHeaders(); err != nil {
-		return nil, err
-	}
+	// Disable header validation
+	//if err := ri.ValidateTracesHeaders(); err != nil {
+	//	return nil, err
+	//}
 	var batches []Batch
 	for _, resourceSpan := range request.ResourceSpans {
 		var events []Event
