@@ -184,9 +184,10 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 				}
 
 				events = append(events, Event{
-					Attributes: eventAttrs,
-					Timestamp:  timestamp,
-					SampleRate: sampleRate,
+					Attributes:   eventAttrs,
+					Timestamp:    timestamp,
+					SampleRate:   sampleRate,
+					ResourceSpan: resourceSpan,
 				})
 			}
 		}
@@ -196,6 +197,7 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 			Events:    events,
 		})
 	}
+
 	return &TranslateOTLPRequestResult{
 		RequestSize: proto.Size(request),
 		Batches:     batches,
