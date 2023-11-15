@@ -45,8 +45,10 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 	//}
 	var batches []Batch
 	var count int
+	var tempResourceSpan *trace.ResourceSpans
 	for _, resourceSpan := range request.ResourceSpans {
 		count = 1
+		tempResourceSpan = resourceSpan
 		var events []Event
 		resourceAttrs := getResourceAttributes(resourceSpan.Resource)
 		dataset := getDataset(ri, resourceAttrs)
@@ -185,15 +187,14 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 						SampleRate: sampleRate,
 					})
 				}
-
 				if count > 1 {
-					resourceSpan = &trace.ResourceSpans{}
+					tempResourceSpan = &trace.ResourceSpans{}
 				}
 				events = append(events, Event{
 					Attributes:   eventAttrs,
 					Timestamp:    timestamp,
 					SampleRate:   sampleRate,
-					ResourceSpan: resourceSpan,
+					ResourceSpan: tempResourceSpan,
 				})
 			}
 		}
