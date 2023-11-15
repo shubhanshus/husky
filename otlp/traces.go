@@ -3,7 +3,6 @@ package otlp
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -197,8 +196,6 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 					SampleRate:   sampleRate,
 					ResourceSpan: tempResourceSpan,
 				})
-
-				fmt.Println("Inside TranslateTraceRequest to process the span tempResourceSpan--", tempResourceSpan)
 			}
 		}
 		batches = append(batches, Batch{
