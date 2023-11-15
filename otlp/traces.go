@@ -3,6 +3,7 @@ package otlp
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -47,7 +48,7 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 	var count int
 	var tempResourceSpan *trace.ResourceSpans
 	for _, resourceSpan := range request.ResourceSpans {
-		count = 1
+		count = 0
 		tempResourceSpan = resourceSpan
 		var events []Event
 		resourceAttrs := getResourceAttributes(resourceSpan.Resource)
@@ -196,6 +197,8 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 					SampleRate:   sampleRate,
 					ResourceSpan: tempResourceSpan,
 				})
+
+				fmt.Println("Inside TranslateTraceRequest to process the span tempResourceSpan--", tempResourceSpan)
 			}
 		}
 		batches = append(batches, Batch{
