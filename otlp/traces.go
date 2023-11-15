@@ -188,7 +188,7 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 					})
 				}
 				if count > 1 {
-					tempResourceSpan = &trace.ResourceSpans{}
+					tempResourceSpan = nil
 				}
 				events = append(events, Event{
 					Attributes:   eventAttrs,
