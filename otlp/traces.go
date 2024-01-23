@@ -24,9 +24,11 @@ const (
 // TranslateTraceRequestFromReader translates an OTLP/HTTP request into Honeycomb-friendly structure
 // RequestInfo is the parsed information from the HTTP headers
 func TranslateTraceRequestFromReader(body io.ReadCloser, ri RequestInfo) (*TranslateOTLPRequestResult, error) {
-	if err := ri.ValidateTracesHeaders(); err != nil {
-		return nil, err
-	}
+
+	// Disable header validation
+	//if err := ri.ValidateTracesHeaders(); err != nil {
+	//	return nil, err
+	//}
 	request := &collectorTrace.ExportTraceServiceRequest{}
 	if err := parseOtlpRequestBody(body, ri.ContentType, ri.ContentEncoding, request); err != nil {
 		return nil, ErrFailedParseBody
@@ -37,11 +39,16 @@ func TranslateTraceRequestFromReader(body io.ReadCloser, ri RequestInfo) (*Trans
 // TranslateTraceRequest translates an OTLP/gRPC request into Honeycomb-friendly structure
 // RequestInfo is the parsed information from the gRPC metadata
 func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri RequestInfo) (*TranslateOTLPRequestResult, error) {
-	if err := ri.ValidateTracesHeaders(); err != nil {
-		return nil, err
-	}
+	// Disable header validation
+	//if err := ri.ValidateTracesHeaders(); err != nil {
+	//	return nil, err
+	//}
 	var batches []Batch
+	var count int
+	var tempResourceSpan *trace.ResourceSpans
 	for _, resourceSpan := range request.ResourceSpans {
+		count = 0
+		tempResourceSpan = resourceSpan
 		var events []Event
 		resourceAttrs := getResourceAttributes(resourceSpan.Resource)
 		dataset := getDataset(ri, resourceAttrs)
@@ -50,6 +57,7 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 			scopeAttrs := getScopeAttributes(scopeSpan.Scope)
 
 			for _, span := range scopeSpan.GetSpans() {
+				count++
 				traceID := BytesToTraceID(span.TraceId)
 				spanID := bytesToSpanID(span.SpanId)
 
@@ -184,11 +192,14 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 						SampleRate: sampleRate,
 					})
 				}
-
+				if count > 1 {
+					tempResourceSpan = nil
+				}
 				events = append(events, Event{
-					Attributes: eventAttrs,
-					Timestamp:  timestamp,
-					SampleRate: sampleRate,
+					Attributes:   eventAttrs,
+					Timestamp:    timestamp,
+					SampleRate:   sampleRate,
+					ResourceSpan: tempResourceSpan,
 				})
 			}
 		}
@@ -198,6 +209,7 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 			Events:    events,
 		})
 	}
+
 	return &TranslateOTLPRequestResult{
 		RequestSize: proto.Size(request),
 		Batches:     batches,
