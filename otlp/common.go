@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	v1 "go.opentelemetry.io/proto/otlp/trace/v1"
 	"io"
 	"math"
 	"net/http"
@@ -99,9 +100,10 @@ type Batch struct {
 
 // Event represents a single Honeycomb event
 type Event struct {
-	Attributes map[string]interface{}
-	Timestamp  time.Time
-	SampleRate int32
+	Attributes   map[string]interface{}
+	Timestamp    time.Time
+	SampleRate   int32
+	ResourceSpan *v1.ResourceSpans
 }
 
 // RequestInfo represents information parsed from either HTTP headers or gRPC metadata

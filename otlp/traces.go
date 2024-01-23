@@ -44,7 +44,11 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 	//	return nil, err
 	//}
 	var batches []Batch
+	var count int
+	var tempResourceSpan *trace.ResourceSpans
 	for _, resourceSpan := range request.ResourceSpans {
+		count = 0
+		tempResourceSpan = resourceSpan
 		var events []Event
 		resourceAttrs := getResourceAttributes(resourceSpan.Resource)
 		dataset := getDataset(ri, resourceAttrs)
@@ -53,6 +57,7 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 			scopeAttrs := getScopeAttributes(scopeSpan.Scope)
 
 			for _, span := range scopeSpan.GetSpans() {
+				count++
 				traceID := BytesToTraceID(span.TraceId)
 				spanID := bytesToSpanID(span.SpanId)
 
@@ -134,10 +139,15 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 					if sevent.Name == "exception" {
 						for _, seventAttr := range sevent.Attributes {
 							switch seventAttr.Key {
-							case "exception.message", "exception.type", "exception.stacktrace", "exception.escaped":
+							case "exception.message", "exception.type", "exception.stacktrace":
 								// don't overwrite if the value is already on the span
 								if _, present := eventAttrs[seventAttr.Key]; !present {
-									eventAttrs[seventAttr.Key] = seventAttr.Value
+									eventAttrs[seventAttr.Key] = seventAttr.Value.GetStringValue()
+								}
+							case "exception.escaped":
+								// don't overwrite if the value is already on the span
+								if _, present := eventAttrs[seventAttr.Key]; !present {
+									eventAttrs[seventAttr.Key] = seventAttr.Value.GetBoolValue()
 								}
 							}
 						}
@@ -182,11 +192,14 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 						SampleRate: sampleRate,
 					})
 				}
-
+				if count > 1 {
+					tempResourceSpan = nil
+				}
 				events = append(events, Event{
-					Attributes: eventAttrs,
-					Timestamp:  timestamp,
-					SampleRate: sampleRate,
+					Attributes:   eventAttrs,
+					Timestamp:    timestamp,
+					SampleRate:   sampleRate,
+					ResourceSpan: tempResourceSpan,
 				})
 			}
 		}
@@ -196,6 +209,7 @@ func TranslateTraceRequest(request *collectorTrace.ExportTraceServiceRequest, ri
 			Events:    events,
 		})
 	}
+
 	return &TranslateOTLPRequestResult{
 		RequestSize: proto.Size(request),
 		Batches:     batches,
